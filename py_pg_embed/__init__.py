@@ -1,4 +1,5 @@
 import pathlib
+import platform
 import shutil
 import subprocess
 import tarfile
@@ -12,7 +13,7 @@ jar = pathlib.Path("tmp.jar")
 pg = pathlib.Path("pg")
 data = pathlib.Path("data")
 
-py_pg_embed._download(py_pg_embed.get_url(), jar)
+py_pg_embed._download(py_pg_embed.get_url(version="17.0.0"), jar)
 py_pg_embed.extract(jar, pg)
 py_pg_embed.initdb(pg, data)
 py_pg_embed.postgres(pg,data)
@@ -23,7 +24,11 @@ $ psql -h localhost postgres
 """
 
 
-def get_url(os="linux", arch="amd64", version="16.3.0"):
+def get_url(version, os=None, arch=None):
+    if not os:
+        os = platform.system().lower()
+    if not arch:
+        arch = {"x86_64": "amd64"}[platform.machine()]
     return f"https://repo1.maven.org/maven2/io/zonky/test/postgres/embedded-postgres-binaries-{os}-{arch}/{version}/embedded-postgres-binaries-{os}-{arch}-{version}.jar"
 
 
