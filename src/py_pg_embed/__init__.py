@@ -89,6 +89,9 @@ def run_with_dj_database_url():
         initdb(pg_dir, data_dir)
 
     with subprocess.Popen([pg_dir / "bin" / "postgres", "-D", data_dir]) as pg_proc:
-        os.environ["DATABASE_URL"] = "postgresql://localhost/postgres"
-        subprocess.run(command, check=True)
-        pg_proc.terminate()
+        try:
+            os.environ["DATABASE_URL"] = "postgresql://localhost/postgres"
+            returncode = subprocess.run(command).returncode
+        finally:
+            pg_proc.terminate()
+    sys.exit(returncode)
