@@ -7,3 +7,9 @@ requires-python = ">=3.11"
 dependencies = [
     "platformdirs>=4.3.6",
 ]
+
+[tool.uv]
+package = true
+
+[project.scripts]
+run-with-pg-dj-database-url = "py_pg_embed:run_with_dj_database_url"

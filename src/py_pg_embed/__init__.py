@@ -1,8 +1,10 @@
+import os
 import pathlib
 import platform
 import platformdirs
 import shutil
 import subprocess
+import sys
 import tarfile
 import urllib.request
 import zipfile
@@ -10,10 +12,10 @@ import zipfile
 """
 import pathlib, py_pg_embed
 
-data = pathlib.Path("data")
+data_dir = pathlib.Path("data")
 pg = py_pg_embed.get_pg_dir("17.0.0")
-py_pg_embed.initdb(pg, data)
-py_pg_embed.postgres(pg,data)
+py_pg_embed.initdb(pg, data_dir)
+py_pg_embed.postgres(pg,data_dir)
 
 ...
 
@@ -38,12 +40,12 @@ def extract(package, path: pathlib.Path, os, arch_2):
                 tar.extractall(path)
 
 
-def initdb(extracted: pathlib.Path, datadir: pathlib.Path):
-    subprocess.run([extracted / "bin" / "initdb", "-D", datadir], check=True)
+def initdb(extracted: pathlib.Path, data_dir: pathlib.Path):
+    subprocess.run([extracted / "bin" / "initdb", "-D", data_dir], check=True)
 
 
-def postgres(extracted: pathlib.Path, datadir: pathlib.Path):
-    subprocess.run([extracted / "bin" / "postgres", "-D", datadir], check=True)
+def postgres(extracted: pathlib.Path, data_dir: pathlib.Path):
+    subprocess.run([extracted / "bin" / "postgres", "-D", data_dir], check=True)
 
 
 def get_pg_dir(version, os=None, arch_1=None, arch_2=None):
@@ -73,3 +75,20 @@ def get_pg_dir(version, os=None, arch_1=None, arch_2=None):
 
     return pg_dir
 
+
+def run_with_dj_database_url():
+    assert len(sys.argv) > 3, "arguments VERSION DATA_DIR PROGRAM ARG1 ARG2..."
+
+    version = sys.argv[1]
+    data_dir = pathlib.Path(sys.argv[2])
+    command = sys.argv[3:]
+
+    pg_dir = get_pg_dir(version)
+
+    if not data_dir.exists():
+        initdb(pg_dir, data_dir)
+
+    with subprocess.Popen([pg_dir / "bin" / "postgres", "-D", data_dir]) as pg_proc:
+        os.environ["DATABASE_URL"] = "postgresql://localhost/postgres"
+        subprocess.run(command, check=True)
+        pg_proc.terminate()
